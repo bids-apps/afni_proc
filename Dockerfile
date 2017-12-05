@@ -76,7 +76,7 @@ RUN npm install -g bids-validator@0.19.2
 COPY run.py /run.py
 
 COPY version /version
-ENTRYPOINT ["/usr/bin/python3 /run.py"]
+ENTRYPOINT ["/run.py"]
 
 #--------------------------------------
 # Save container specifications to JSON
