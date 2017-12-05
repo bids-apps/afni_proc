@@ -74,7 +74,7 @@ RUN apt-get update && \
 RUN npm install -g bids-validator@0.24.0
 
 COPY run.py /run.py
-
+COPY . /code
 COPY version /version
 ENTRYPOINT ["/run.py"]
 
