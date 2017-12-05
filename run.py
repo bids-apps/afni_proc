@@ -339,7 +339,7 @@ for subject_label in subjects_to_analyze:
                 config['anat_ap_ext'] = np.abs(anat_exts[2]) + np.abs(anat_exts[3]) + 1
                 config['anat_is_ext'] = np.abs(anat_exts[4]) + np.abs(anat_exts[5]) + 1
                 print("#######\n anat_ap_ext = %f \n#########"%config['anat_ap_ext'])
-            except FileNotFoundError:
+            except (FileNotFoundError, ValueError):
                 pass
 
             tpl = IndividualTemplate()
