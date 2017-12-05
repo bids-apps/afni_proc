@@ -274,7 +274,7 @@ for subject_label in subjects_to_analyze:
                 pbd['orientation'] = pbn[3].split('+')[-1]
                 pb_lod.append(pbd)
             pb_df = pd.DataFrame(pb_lod)
-            config['subj'] = 'subj_id': pb_df.subj.unique()[0]
+            config['subj'] = pb_df.subj.unique()[0]
             config['blocks'] = ' '.join(pb_df.block.unique())
 
             try:
