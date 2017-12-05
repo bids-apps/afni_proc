@@ -229,7 +229,7 @@ reports_dir = os.path.join(args.output_dir,"reports")
 subjects_to_analyze = []
 # only for a subset of subjects
 if args.participant_label:
-    subjects_to_analyze = args.participant_label
+    subjects_to_analyze = args.participant_label[0].split(' ')
 # for all subjects
 else:
     subject_dirs = glob(os.path.join(args.bids_dir, "sub-*"))
@@ -246,7 +246,7 @@ for subject_label in subjects_to_analyze:
     subj_qc_img_dir = os.path.join(subj_qc_dir, 'img')
 
     if args.analysis_level == 'participant':
-
+        config = {}
         cmd = cmd_skeleton.format(subj_id=subject_label, out_dir=subj_out_dir,
                                   anat_path=anat_path, epi_paths=epi_paths)
         if '{' in cmd:
@@ -274,18 +274,14 @@ for subject_label in subjects_to_analyze:
                 pbd['orientation'] = pbn[3].split('+')[-1]
                 pb_lod.append(pbd)
             pb_df = pd.DataFrame(pb_lod)
+            config['subj'] = 'subj_id': pb_df.subj.unique()[0]
+            config['blocks'] = ' '.join(pb_df.block.unique())
 
-
-            config['blocks'] = {
-                'subj_id': pb_df.subj.unique()[0],
-                'blocks': ' '.join(pb_df.block.unique()),
-            }
-
-            # try:
-            mot_path = make_motion_plot(subj_out_dir, subject_label)
-            config['motion_report'] = read_report_snippet(mot_path)
-            # except FileNotFoundError:
-            #    pass
+            try:
+                mot_path = make_motion_plot(subj_out_dir, subject_label)
+                config['motion_report'] = read_report_snippet(mot_path)
+            except FileNotFoundError:
+                pass
 
             warn_list = ['3dDeconvolve.err',
                          'out.pre_ss_warn.txt',
