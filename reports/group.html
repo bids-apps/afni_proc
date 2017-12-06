@@ -135,8 +135,8 @@
   {% if config['warnings'] %}
   <li>Warnings:
     <ul class="sub-simple">
-    {% for warn in config['warnings'] %}
-    <li>{{ warn }}</li>
+    {% for warn_name, warn_text in config['warnings'].items() %}
+      <li>{{ warn_name }}: {{ warn_text }}</li>
     {% endfor %}
     </ul>
   </li>

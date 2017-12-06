@@ -111,13 +111,13 @@ span.qa-pass {
 
 
 {% if warnings %}
-<li>Warnings:
-  <ul class="sub-simple">
-  {% for warn in warnings %}
-  <li>{{ warn }}</li>
-  {% endfor %}
-  </ul>
-</li>
+  <li>Warnings:
+    <ul class="sub-simple">
+    {% for warn_name, warn_text in warnings.items() %}
+      <li>{{ warn_name }}: {{ warn_text }}</li>
+    {% endfor %}
+    </ul>
+  </li>
 {% endif %}
 
 
