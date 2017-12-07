@@ -237,10 +237,11 @@ else:
 
 all_configs = []
 for subject_label in subjects_to_analyze:
-    anat_path = list(glob(os.path.join(args.bids_dir, "sub-%s"%subject_label,
-                                       "anat", "*_T1w.nii*")) + glob(os.path.join(args.bids_dir,"sub-%s"%subject_label,"ses-*","anat", "*_T1w.nii*")))[0]
-    epi_paths = ' '.join(list(glob(os.path.join(args.bids_dir, "sub-%s"%subject_label,
-                                                "func", "*bold.nii*")) + glob(os.path.join(args.bids_dir,"sub-%s"%subject_label,"ses-*","func", "*bold.nii*"))))
+    anat_path = sorted(list(glob(os.path.join(args.bids_dir, "sub-%s"%subject_label,
+                                       "anat", "*_T1w.nii*")) + glob(os.path.join(args.bids_dir,"sub-%s"%subject_label,"ses-*","anat", "*_T1w.nii*"))))[0]
+    epi_paths = ' '.join(sorted(list(glob(os.path.join(args.bids_dir, "sub-%s"%subject_label,
+                                                "func", "*bold.nii*")) + glob(os.path.join(args.bids_dir,"sub-%s"%subject_label,"ses-*","func", "*bold.nii*")))))
+
     subj_out_dir = os.path.join(args.output_dir, "sub-%s"%subject_label)
     subj_qc_dir = os.path.join(subj_out_dir, 'qc')
     subj_qc_img_dir = os.path.join(subj_qc_dir, 'img')
