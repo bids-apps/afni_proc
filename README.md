@@ -60,11 +60,12 @@ This App has the following command line arguments:
                                 Optional: command string for afni proc. Parameters
                                 that vary by subject should be encapsulated in curly
                                 braces and must all be included {subj_id},
-                                {out_dir}, {anat_path}, or {epi_paths}.The first
+                                {out_dir}, {anat_path}, or {epi_paths}.-script option
+                                is added automatically so don't add it to the command. The first
                                 _T1w for each subject will currently be used as the
                                 anat.All of the _bold will be used as the
-                                functionals.Example:-subj_id {subj_id} -script
-                                proc.bids -scr_overwrite -out_dir {out_dir} -blocks
+                                functionals.Example:-subj_id {subj_id}
+                                -scr_overwrite -out_dir {out_dir} -blocks
                                 tshift align tlrc volreg blur mask scale -copy_anat
                                 {anat_path} -tcat_remove_first_trs 0 -dsets
                                 {epi_paths} -align_opts_aea -cost lpc+ZZ -giant_move

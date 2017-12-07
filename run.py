@@ -190,7 +190,7 @@ parser.add_argument('--afni_proc', help='Optional: command string for afni proc.
                     'All of the _bold will be used as the functionals.'
                     'Example:'
                     '-subj_id {subj_id} '
-                    '-script proc.bids -scr_overwrite -out_dir {{out_dir}} '
+                    '-scr_overwrite -out_dir {{out_dir}} '
                     '-blocks tshift align tlrc volreg blur mask scale '
                     '-copy_anat {{anat_path}} -tcat_remove_first_trs 0 '
                     '-dsets {{epi_paths}} -volreg_align_to MIN_OUTLIER '
@@ -209,10 +209,10 @@ if args.afni_proc is not None:
     for bc in bad_chars:
         if bc in cmd_skeleton:
             raise Exception("Unsafe character '%s' found in command: %s"%(bc, cmd_skeleton))
-    cmd_skeleton = 'python /opt/afni/afni_proc.py '+ cmd_skeleton
+    cmd_skeleton = 'python /opt/afni/afni_proc.py -script proc.bids.{subj_id} '+ cmd_skeleton
 else:
     cmd_skeleton = "python /opt/afni/afni_proc.py -subj_id {subj_id} \
--script proc.bids -scr_overwrite -out_dir {out_dir} \
+-script proc.bids.{subj_id} -scr_overwrite -out_dir {out_dir} \
 -blocks tshift align tlrc volreg blur mask scale \
 -copy_anat {anat_path} -tcat_remove_first_trs 0 \
 -dsets {epi_paths}  -align_opts_aea -cost lpc+ZZ -giant_move \
@@ -256,8 +256,9 @@ for subject_label in subjects_to_analyze:
         if not args.report_only:
             print(' '.join(cmd))
             run(cmd)
-            print("tcsh -xef proc.bids 2>&1 | tee output.proc.bids")
-            run("tcsh -xef proc.bids 2>&1 | tee output.proc.bids", shell=True)
+            print("tcsh -xef proc.bids.{subj_id} 2>&1 | tee output.proc.bids.{subj_id}".format(subj_id = subject_label))
+            run("tcsh -xef proc.bids.{subj_id}  2>&1 | tee output.proc.bids.{subj_id}".format(subj_id = subject_label), shell=True)
+            run('mv proc.bids.{subj_id} {subj_out_dir}; mv output.proc.bids.{subj_id} {subj_out_dir}'.format(subj_id = subject_label, subj_out_dir = subj_out_dir))
 
         pbs = glob(os.path.join(subj_out_dir, 'pb*'))
         if len(pbs) > 0:
