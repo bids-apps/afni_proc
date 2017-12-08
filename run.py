@@ -164,7 +164,7 @@ def run(command, env={}, shell=False):
     if process.returncode != 0:
         raise Exception("Non zero return code: %d"%process.returncode)
 
-task_re = re.compile('.*task-([0-9a-zA-Z]*)_.*')
+task_re = re.compile('.*task-([^_]*)_.*')
 
 
 parser = argparse.ArgumentParser(description='Example BIDS App entrypoint script.')
@@ -224,10 +224,10 @@ if args.afni_proc is not None:
     for bc in bad_chars:
         if bc in cmd_skeleton:
             raise Exception("Unsafe character '%s' found in command: %s"%(bc, cmd_skeleton))
-    cmd_skeleton = 'python /opt/afni/afni_proc.py -script proc.bids.{subj_id} '+ cmd_skeleton
+    cmd_skeleton = 'python /opt/afni/afni_proc.py -check_results_dir no -script {ses_dir}/proc.bids.{subj_id}.{ses_id}.{task_id} '+ cmd_skeleton
 else:
-    cmd_skeleton = "python /opt/afni/afni_proc.py -subj_id {subj_id} \
--script proc.bids.{subj_id} -scr_overwrite -out_dir {out_dir} \
+    cmd_skeleton = "python /opt/afni/afni_proc.py -check_results_dir no -subj_id {subj_id} \
+-script {ses_dir}/proc.bids.{subj_id}.{ses_id}.{task_id} -scr_overwrite -out_dir {out_dir} \
 -blocks tshift align tlrc volreg blur mask scale \
 -copy_anat {anat_path} -tcat_remove_first_trs 0 \
 -dsets {epi_paths}  -align_opts_aea -cost lpc+ZZ -giant_move \
@@ -270,8 +270,10 @@ for subject_label in subjects_to_analyze:
     sessions_list = [session_dir.split("-")[-1] for session_dir in sessions_dirs]
     if len(sessions_list) > 0:
         sessions_exist = True
-        if args.sessions_label:
+        if args.session_label:
             sessions_to_analyze = sorted(set(args.session_label[0].split(' ')).intersection(set(sessions_list)))
+        else:
+            sessions_to_analyze = sessions_list
     else:
         sessions_exist = False 
         sessions_to_analyze = ['']
@@ -283,13 +285,17 @@ for subject_label in subjects_to_analyze:
 
         else:
             session_out_dir = subj_out_dir
+        os.makedirs(session_out_dir, exist_ok = True) 
 
-        all_epi_paths = ' '.join(sorted(set(glob(os.path.join(args.bids_dir, "sub-%s"%subject_label,
-                                                    "func", "*bold.nii*")) + glob(os.path.join(args.bids_dir,"sub-%s"%subject_label,"ses-%s"%session_label,"func", "*bold.nii*")))))
+        all_epi_paths = sorted(set(glob(os.path.join(args.bids_dir, "sub-%s"%subject_label,
+                                                    "func", "*bold.nii*")) + glob(os.path.join(args.bids_dir,"sub-%s"%subject_label,"ses-%s"%session_label,"func", "*bold.nii*"))))
 
         # Which tasks to analyze
-        tasks_in_session = set([task_re.findall(epi)[0] for epi in all_epi_paths])
-
+        try:
+            tasks_in_session = set([task_re.findall(epi)[0] for epi in all_epi_paths])
+        except:
+            print("Tasks: ",[epi for epi in all_epi_paths if len(task_re.findall(epi))==0])
+            raise Exception("A bold scan without a task label exists. Not permitted")
         if args.task_label:
             tasks_to_analyze = sorted(set(args.task_label[0].split(' ')).intersection(tasks_in_session))
         else:
@@ -305,24 +311,19 @@ for subject_label in subjects_to_analyze:
         
             if args.analysis_level == 'participant':
 
-                if not os.path.exists(subj_out_dir):
-                    os.mkdir(subj_out_dir)
-                if not os.path.exists(session_out_dir):
-                    os.mkdir(session_out_dir)
-
                 config = {}
-                cmd = cmd_skeleton.format(subj_id=subject_label, out_dir=task_out_dir,
-                                          anat_path=anat_path, epi_paths=epi_paths)
+                cmd = cmd_skeleton.format(subj_id=subject_label,ses_id = session_label, task_id = task_label, out_dir=task_out_dir,
+                                          anat_path=anat_path, epi_paths=epi_paths, ses_dir = session_out_dir)
                 if '{' in cmd:
                     raise Exception("Unsafe character '{' found in command: %s"%cmd.join(' '))
                 cmd = cmd.replace('  ', ' ').split(' ')
 
                 if not args.report_only:
-                    print(' '.join(cmd))
+                    print(' '.join(cmd), flush = True)
                     run(cmd)
-                    print("tcsh -xef proc.bids.{subj_id} 2>&1 | tee output.proc.bids.{subj_id}".format(subj_id = subject_label))
-                    run("tcsh -xef proc.bids.{subj_id}  2>&1 | tee output.proc.bids.{subj_id}".format(subj_id = subject_label), shell=True)
-                    run('mv proc.bids.{subj_id} {task_out_dir}; mv output.proc.bids.{subj_id} {task_out_dir}'.format(subj_id = subject_label, task_out_dir = task_out_dir))
+                    print("tcsh -xef {ses_dir}/proc.bids.{subj_id}.{ses_id}.{task_id} 2>&1 | tee {ses_dir}/output.proc.bids.{subj_id}.{ses_id}.{task_id}".format(subj_id = subject_label,ses_id = session_label, task_id = task_label, ses_dir = session_out_dir), flush = True)
+                    run("tcsh -xef {ses_dir}/proc.bids.{subj_id}.{ses_id}.{task_id}  2>&1 | tee {ses_dir}/output.proc.bids.{subj_id}.{ses_id}.{task_id}".format(subj_id = subject_label,ses_id = session_label, task_id = task_label, ses_dir = session_out_dir), shell=True)
+                    run("mv  {ses_dir}/proc.bids.{subj_id}.{ses_id}.{task_id} {out_dir};mv  {ses_dir}/output.proc.bids.{subj_id}.{ses_id}.{task_id} {out_dir}".format(subj_id = subject_label,ses_id = session_label, task_id = task_label, ses_dir = session_out_dir, out_dir = task_out_dir), shell=True)
 
                 pbs = glob(os.path.join(task_out_dir, 'pb*'))
                 if len(pbs) > 0:
