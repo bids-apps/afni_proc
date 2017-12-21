@@ -50,8 +50,8 @@
     $("#nrtodo").text(counts.registration["-1"])
   }
 
-  function qc_update(subj_id, stage, value) {
-    subjs[subj_id - 1][stage] = parseInt(value)
+  function qc_update(run_id, stage, value) {
+    subjs[run_id][stage] = parseInt(value)
     updateCounts();
   }
 
@@ -124,19 +124,35 @@
 {% for config in configs %}
 <div class="subject mt-3 mb-3 pt-3 pb-3">
   <script type="text/javascript">
-    var subj_qc = {id:{{ config['subj_id'] }}, motion:null, registration:null}
+    {% if config['session_label'] %}
+    var subj_qc = {id:{{ config['report_num'] }}, subject: "{{ config['subj_id'] }}", session: "{{ config['session_label'] }}", task:"{{ config['task_label'] }}",  motion:null, registration:null}
+    {% else %}
+    var subj_qc = {id:{{ config['report_num'] }}, subject: "{{ config['subj_id'] }}", session: null, task:"{{ config['task_label'] }}",  motion:null, registration:null}
+    {% endif %}
   </script>
-
-  <h2>Subject {{ config['subj_id'] }} Summary</h2>
+  {% if config['session_label'] %}
+    <h2>Subject {{ config['subj_id'] }}, Session {{ config['session_label'] }}, {{ config['task_label'] }} Summary</h2>
+  {% else %}
+    <h2>Subject {{ config['subj_id'] }}, {{ config['task_label'] }} Summary</h2>
+  {% endif %}
   <ul class="simple">
   <li>Subject ID: {{ config['subj_id'] }}.</li>
+  {% if config['session_label'] %}
+    <li>Session: {{ config['session_label'] }}</li>
+  {% endif %}
+  <li>Task: {{ config['task_label'] }}</li>
+  <li>Number of runs: {{ config['num_runs'] }}</li>
   <li>Blocks run: {{ config['blocks'] }}.</li>
 
   {% if config['warnings'] %}
   <li>Warnings:
     <ul class="sub-simple">
     {% for warn_name, warn_text in config['warnings'].items() %}
-      <li>{{ warn_name }}: {{ warn_text }}</li>
+      <li>{{ warn_name }}: 
+      {% for line in warn_text %}
+        {{ line }}<br />
+      {% endfor %}
+      </li> 
     {% endfor %}
     </ul>
   </li>
@@ -144,10 +160,10 @@
   </ul>
 
   {% if config['motion_report'] %}
-  <h3 class="muted">Subject {{ config['subj_id'] }} Motion Report</h3>
+  <h3 class="muted">Motion Report</h3>
   <div class="radio">
-  <label><input type="radio" name="inlineRadio" id="inlineRating1" value="1" onclick="qc_update({{ config['subj_id'] }}, 'motion', this.value)"> Good </label>
-  <label><input type="radio" name="inlineRadio" id="inlineRating0" value="0" onclick="qc_update({{ config['subj_id'] }}, 'motion', this.value)"> Bad</label>
+  <label><input type="radio" name="inlineRadio" id="inlineRating1" value="1" onclick="qc_update({{ config['report_num'] }}, 'motion', this.value)"> Good </label>
+  <label><input type="radio" name="inlineRadio" id="inlineRating0" value="0" onclick="qc_update({{ config['report_num'] }}, 'motion', this.value)"> Bad</label>
   </div>
   <div class="embeded-report">
   {{ config['motion_report'] }}
@@ -158,15 +174,15 @@
   {% endif %}
 
   {% if config['volreg_report_anat'] %}
-    <h3>Subject {{ config['subj_id'] }} Registration</h3>
+    <h3>Registration</h3>
     <div class="radio">
-    <label><input type="radio" name="inlineRadio" id="inlineRating1" value="1" onclick="qc_update({{ config['subj_id'] }}, 'registration', this.value)"> Good </label>
-    <label><input type="radio" name="inlineRadio" id="inlineRating0" value="0" onclick="qc_update({{ config['subj_id'] }}, 'registration', this.value)"> Bad</label>
+    <label><input type="radio" name="inlineRadio" id="inlineRating1" value="1" onclick="qc_update({{ config['report_num'] }}, 'registration', this.value)"> Good </label>
+    <label><input type="radio" name="inlineRadio" id="inlineRating0" value="0" onclick="qc_update({{ config['report_num'] }}, 'registration', this.value)"> Bad</label>
     </div>
     <div class="embeded-report">
       <div>
-        <canvas id="3Dviewer_{{ config['subj_id'] }}", onclick="change_{{ config['subj_id'] }}();" resize>
-        <img id="spriteImg_{{ config['subj_id'] }}" class="hidden" src="data:image/jpeg;base64,{{ config['volreg_report_anat'] }}">
+        <canvas id="3Dviewer_{{ config['report_num'] }}", onclick="change_{{ config['report_num'] }}();" resize>
+        <img id="spriteImg_{{ config['report_num'] }}" class="hidden" src="data:image/jpeg;base64,{{ config['volreg_report_anat'] }}">
     </div>
     </div>
     <script type="text/javascript">
@@ -182,29 +198,29 @@
 
   <script type="text/javascript">
 
-    var image_tracker_{{ config['subj_id'] }} = 'anat';
-    var anat_src_{{ config['subj_id'] }} = null
+    var image_tracker_{{ config['report_num'] }} = 'anat';
+    var anat_src_{{ config['report_num'] }} = null
 
-    function change_{{ config['subj_id'] }}(){
-    var image = document.getElementById("spriteImg_{{ config['subj_id'] }}");
+    function change_{{ config['report_num'] }}(){
+    var image = document.getElementById("spriteImg_{{ config['report_num'] }}");
 
-    if(image_tracker_{{ config['subj_id'] }}=='anat'){
-      if(anat_src_{{ config['subj_id'] }}){
+    if(image_tracker_{{ config['report_num'] }}=='anat'){
+      if(anat_src_{{ config['report_num'] }}){
       }else{
-        anat_src_{{ config['subj_id'] }}=image.src
+        anat_src_{{ config['report_num'] }}=image.src
       }
       image.src="data:image/jpeg;base64,{{ config['volreg_report_func'] }}";
-      image_tracker_{{ config['subj_id'] }}='func';
+      image_tracker_{{ config['report_num'] }}='func';
     }else{
-    image.src=anat_src_{{ config['subj_id'] }};
-    image_tracker_{{ config['subj_id'] }}='anat';
+    image.src=anat_src_{{ config['report_num'] }};
+    image_tracker_{{ config['report_num'] }}='anat';
     }
     }
 
     $( window ).load(function() {
       var brain = brainsprite({
-        canvas: "3Dviewer_{{ config['subj_id'] }}",
-        sprite: "spriteImg_{{ config['subj_id'] }}",
+        canvas: "3Dviewer_{{ config['report_num'] }}",
+        sprite: "spriteImg_{{ config['report_num'] }}",
         nbSlice: { 'Y':{{ config['anat_ap_ext'] }} , 'Z':{{ config['anat_is_ext'] }} }
       });
     });

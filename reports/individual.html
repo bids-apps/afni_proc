@@ -104,17 +104,26 @@ span.qa-pass {
 
 <h2>Summary</h2>
 <ul class="simple">
-<li>Subject ID: {{ subj_id }}.</li>
+<li>Subject ID: {{ subj_id }}</li>
+{% if session_label %}
+  <li>Session: {{ session_label }}</li>
+{% endif %}
+<li>Task: {{ task_label }}</li>
+<li>Number of runs: {{ num_runs }}</li>
 <li>Blocks run: {{ blocks }}.</li>
-<li>AP extent: {{ anat_ap_ext }}.</li>
-<li>IS extent: {{ anat_is_ext }}.</li>
+<li>AP extent: {{ anat_ap_ext }}</li>
+<li>IS extent: {{ anat_is_ext }}</li>
 
 
 {% if warnings %}
   <li>Warnings:
     <ul class="sub-simple">
     {% for warn_name, warn_text in warnings.items() %}
-      <li>{{ warn_name }}: {{ warn_text }}</li>
+      <li>{{ warn_name }}: 
+      {% for line in warn_text %}
+        {{ line }}<br />
+      {% endfor %}
+      </li>
     {% endfor %}
     </ul>
   </li>

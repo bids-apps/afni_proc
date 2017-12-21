@@ -257,6 +257,7 @@ else:
 # make tasks to analyze
 
 all_configs = []
+report_num = 0
 for subject_label in subjects_to_analyze:
 
     # get anatomical path
@@ -279,10 +280,8 @@ for subject_label in subjects_to_analyze:
         sessions_to_analyze = ['']
     
     for session_label in sessions_to_analyze:
-
         if sessions_exist:
             session_out_dir = os.path.join(subj_out_dir,"ses-%s"%session_label)
-
         else:
             session_out_dir = subj_out_dir
         os.makedirs(session_out_dir, exist_ok = True) 
@@ -341,7 +340,13 @@ for subject_label in subjects_to_analyze:
                         pb_lod.append(pbd)
                     pb_df = pd.DataFrame(pb_lod)
                     config['subj_id'] = pb_df.subj.unique()[0]
+                    config['task_label'] = task_label
+                    config['num_runs'] = len(pb_df.run.unique())
                     config['blocks'] = ' '.join(pb_df.block.unique())
+                    config['report_num'] = report_num
+                    report_num += 1
+                    if session_label != '':
+                        config['session_label'] = session_label
 
                     try:
                         mot_path = make_motion_plot(task_out_dir, subject_label)
@@ -360,6 +365,7 @@ for subject_label in subjects_to_analyze:
                             if os.path.getsize(wf_path) > 0:
                                 with open(wf_path, 'r') as h:
                                     warns[wf] = h.readlines()
+                                warns[wf] = [ww.replace('\n', '') for ww in warns[wf]]
                         except FileNotFoundError:
                             pass
                     if len(warns) > 0:
