@@ -217,7 +217,7 @@ parser.add_argument('-v', '--version', action='version',
 
 args = parser.parse_args()
 
-bad_chars = ['`', '|', '&', ';', '>', '<', '$', '?', '(', ')', '\.', ':', '[', ']']
+bad_chars = ['`', '|', '&', ';', '>', '<', '$', '?', '\.', ':', '[', ']']
 
 if args.afni_proc is not None:
     cmd_skeleton = args.afni_proc
