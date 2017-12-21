@@ -12,6 +12,7 @@ from matplotlib import pyplot as plt
 import base64
 import json
 import numpy as np
+import re
 
 from io import open  # pylint: disable=W0622
 import jinja2
@@ -163,6 +164,8 @@ def run(command, env={}, shell=False):
     if process.returncode != 0:
         raise Exception("Non zero return code: %d"%process.returncode)
 
+task_re = re.compile('.*task-([^_]*)_.*')
+
 
 parser = argparse.ArgumentParser(description='Example BIDS App entrypoint script.')
 parser.add_argument('bids_dir', help='The directory with the input dataset '
@@ -182,6 +185,18 @@ parser.add_argument('--participant_label', help='The label(s) of the participant
                     'provided all subjects should be analyzed. Multiple '
                     'participants can be specified with a space separated list.',
                     nargs="+")
+parser.add_argument('--session_label', help='The label(s) of the sessions(s) that should be analyzed. The label '
+                    'corresponds to ses-<session_label> from the BIDS spec '
+                    '(so it does not include "ses-"). If this parameter is not '
+                    'provided all sessions should be analyzed. Multiple '
+                    'sessions can be specified with a space separated list.',
+                    nargs="+")
+parser.add_argument('--task_label', help='The label(s) of the tasks(s) that should be analyzed. The label '
+                    'corresponds to task-<task_label> from the BIDS spec '
+                    '(so it does not include "task-"). If this parameter is not '
+                    'provided all tasks will be analyzed. Multiple '
+                    'tasks can be specified with a space separated list.',
+                    nargs="+")
 parser.add_argument('--afni_proc', help='Optional: command string for afni proc. '
                     'Parameters that vary by subject '
                     'should be encapsulated in curly braces and must all be included '
@@ -190,7 +205,7 @@ parser.add_argument('--afni_proc', help='Optional: command string for afni proc.
                     'All of the _bold will be used as the functionals.'
                     'Example:'
                     '-subj_id {subj_id} '
-                    '-script proc.bids -scr_overwrite -out_dir {{out_dir}} '
+                    '-scr_overwrite -out_dir {{out_dir}} '
                     '-blocks tshift align tlrc volreg blur mask scale '
                     '-copy_anat {{anat_path}} -tcat_remove_first_trs 0 '
                     '-dsets {{epi_paths}} -volreg_align_to MIN_OUTLIER '
@@ -202,17 +217,17 @@ parser.add_argument('-v', '--version', action='version',
 
 args = parser.parse_args()
 
-bad_chars = ['`', '|', '&', ';', '>', '<', '$', '?', '(', ')', '\.', ':', '[', ']']
+bad_chars = ['`', '|', '&', ';', '>', '<', '$', '?', '\.', ':', '[', ']']
 
 if args.afni_proc is not None:
     cmd_skeleton = args.afni_proc
     for bc in bad_chars:
         if bc in cmd_skeleton:
             raise Exception("Unsafe character '%s' found in command: %s"%(bc, cmd_skeleton))
-    cmd_skeleton = 'python /opt/afni/afni_proc.py '+ cmd_skeleton
+    cmd_skeleton = 'python /opt/afni/afni_proc.py -check_results_dir no -script {ses_dir}/proc.bids.{subj_id}.{ses_id}.{task_id} '+ cmd_skeleton
 else:
-    cmd_skeleton = "python /opt/afni/afni_proc.py -subj_id {subj_id} \
--script proc.bids -scr_overwrite -out_dir {out_dir} \
+    cmd_skeleton = "python /opt/afni/afni_proc.py -check_results_dir no -subj_id {subj_id} \
+-script {ses_dir}/proc.bids.{subj_id}.{ses_id}.{task_id} -scr_overwrite -out_dir {out_dir} \
 -blocks tshift align tlrc volreg blur mask scale \
 -copy_anat {anat_path} -tcat_remove_first_trs 0 \
 -dsets {epi_paths}  -align_opts_aea -cost lpc+ZZ -giant_move \
@@ -233,124 +248,184 @@ if args.participant_label:
 # for all subjects
 else:
     subject_dirs = glob(os.path.join(args.bids_dir, "sub-*"))
-    subjects_to_analyze = [subject_dir.split("-")[-1] for subject_dir in subject_dirs]
+    subjects_to_analyze = sorted([subject_dir.split("-")[-1] for subject_dir in subject_dirs])
+
+# TODO: throw early error if they've specified participants, labels,
+#  and subjects in such a way that there is nothing to analyze
+
+# make sessions to analyze
+# make tasks to analyze
 
 all_configs = []
+report_num = 0
 for subject_label in subjects_to_analyze:
-    anat_path = list(glob(os.path.join(args.bids_dir, "sub-%s"%subject_label,
-                                       "anat", "*_T1w.nii*")) + glob(os.path.join(args.bids_dir,"sub-%s"%subject_label,"ses-*","anat", "*_T1w.nii*")))[0]
-    epi_paths = ' '.join(list(glob(os.path.join(args.bids_dir, "sub-%s"%subject_label,
-                                                "func", "*bold.nii*")) + glob(os.path.join(args.bids_dir,"sub-%s"%subject_label,"ses-*","func", "*bold.nii*"))))
+
+    # get anatomical path
+    anat_path = sorted(list(glob(os.path.join(args.bids_dir, "sub-%s"%subject_label,
+                                           "anat", "*_T1w.nii*")) + glob(os.path.join(args.bids_dir,"sub-%s"%subject_label,"ses-*","anat", "*_T1w.nii*"))))[0]
+
     subj_out_dir = os.path.join(args.output_dir, "sub-%s"%subject_label)
-    subj_qc_dir = os.path.join(subj_out_dir, 'qc')
-    subj_qc_img_dir = os.path.join(subj_qc_dir, 'img')
 
-    if args.analysis_level == 'participant':
-        config = {}
-        cmd = cmd_skeleton.format(subj_id=subject_label, out_dir=subj_out_dir,
-                                  anat_path=anat_path, epi_paths=epi_paths)
-        if '{' in cmd:
-            raise Exception("Unsafe character '{' found in command: %s"%cmd.join(' '))
-        cmd = cmd.replace('  ', ' ').split(' ')
+    # Do sessions exist
+    sessions_dirs = list(glob(os.path.join(args.bids_dir,"sub-%s"%subject_label,"ses-*")))
+    sessions_list = [session_dir.split("-")[-1] for session_dir in sessions_dirs]
+    if len(sessions_list) > 0:
+        sessions_exist = True
+        if args.session_label:
+            sessions_to_analyze = sorted(set(args.session_label[0].split(' ')).intersection(set(sessions_list)))
+        else:
+            sessions_to_analyze = sessions_list
+    else:
+        sessions_exist = False 
+        sessions_to_analyze = ['']
+    
+    for session_label in sessions_to_analyze:
+        if sessions_exist:
+            session_out_dir = os.path.join(subj_out_dir,"ses-%s"%session_label)
+        else:
+            session_out_dir = subj_out_dir
+        os.makedirs(session_out_dir, exist_ok = True) 
 
-        if not args.report_only:
-            print(' '.join(cmd))
-            run(cmd)
-            print("tcsh -xef proc.bids 2>&1 | tee output.proc.bids")
-            run("tcsh -xef proc.bids 2>&1 | tee output.proc.bids", shell=True)
+        all_epi_paths = sorted(set(glob(os.path.join(args.bids_dir, "sub-%s"%subject_label,
+                                                    "func", "*bold.nii*")) + glob(os.path.join(args.bids_dir,"sub-%s"%subject_label,"ses-%s"%session_label,"func", "*bold.nii*"))))
 
-        pbs = glob(os.path.join(subj_out_dir, 'pb*'))
-        if len(pbs) > 0:
-            pb_lod = []
-            for pb in pbs:
-                pbd = {}
-                pbn = pb.split('/')[-1].split('.')
-                pbd['path'] = pb
-                pbd['filename'] = pb.split('/')[-1]
-                pbd['pb'] = int(pbn[0][-2:])
-                pbd['subj'] = pbn[1]
-                pbd['run'] = int(pbn[2][-2:])
-                pbd['block'] = pbn[3].split('+')[0]
-                pbd['orientation'] = pbn[3].split('+')[-1]
-                pb_lod.append(pbd)
-            pb_df = pd.DataFrame(pb_lod)
-            config['subj_id'] = pb_df.subj.unique()[0]
-            config['blocks'] = ' '.join(pb_df.block.unique())
+        # Which tasks to analyze
+        try:
+            tasks_in_session = set([task_re.findall(epi)[0] for epi in all_epi_paths])
+        except:
+            print("Tasks: ",[epi for epi in all_epi_paths if len(task_re.findall(epi))==0])
+            raise Exception("A bold scan without a task label exists. Not permitted")
+        if args.task_label:
+            tasks_to_analyze = sorted(set(args.task_label[0].split(' ')).intersection(tasks_in_session))
+        else:
+            tasks_to_analyze = sorted(tasks_in_session)
+            
+        for task_label in tasks_to_analyze:
+            epi_paths = ' '.join(sorted(set(glob(os.path.join(args.bids_dir, "sub-%s"%subject_label,
+                                                    "func", "*%s*bold.nii*"%task_label)) + glob(os.path.join(args.bids_dir,"sub-%s"%subject_label,"ses-%s"%session_label,"func", "*%s*bold.nii*"%task_label)))))
+            
+            task_out_dir = os.path.join(session_out_dir,task_label)
+            task_qc_dir = os.path.join(task_out_dir, 'qc')
+            task_qc_img_dir = os.path.join(task_qc_dir, 'img')
+        
+            if args.analysis_level == 'participant':
 
-            try:
-                mot_path = make_motion_plot(subj_out_dir, subject_label)
-                config['motion_report'] = read_report_snippet(mot_path)
-            except FileNotFoundError:
-                pass
+                config = {}
+                cmd = cmd_skeleton.format(subj_id=subject_label,ses_id = session_label, task_id = task_label, out_dir=task_out_dir,
+                                          anat_path=anat_path, epi_paths=epi_paths, ses_dir = session_out_dir)
+                if '{' in cmd:
+                    raise Exception("Unsafe character '{' found in command: %s"%cmd.join(' '))
+                cmd = cmd.replace('  ', ' ').split(' ')
 
-            warn_list = ['3dDeconvolve.err',
-                         'out.pre_ss_warn.txt',
-                         'out.cormat_warn.txt']
+                if not args.report_only:
+                    print(' '.join(cmd), flush = True)
+                    run(cmd)
+                    print("tcsh -xef {ses_dir}/proc.bids.{subj_id}.{ses_id}.{task_id} 2>&1 | tee {ses_dir}/output.proc.bids.{subj_id}.{ses_id}.{task_id}".format(subj_id = subject_label,ses_id = session_label, task_id = task_label, ses_dir = session_out_dir), flush = True)
+                    run("tcsh -xef {ses_dir}/proc.bids.{subj_id}.{ses_id}.{task_id}  2>&1 | tee {ses_dir}/output.proc.bids.{subj_id}.{ses_id}.{task_id}".format(subj_id = subject_label,ses_id = session_label, task_id = task_label, ses_dir = session_out_dir), shell=True)
+                    run("mv  {ses_dir}/proc.bids.{subj_id}.{ses_id}.{task_id} {out_dir};mv  {ses_dir}/output.proc.bids.{subj_id}.{ses_id}.{task_id} {out_dir}".format(subj_id = subject_label,ses_id = session_label, task_id = task_label, ses_dir = session_out_dir, out_dir = task_out_dir), shell=True)
 
-            warns = {}
-            for wf in warn_list:
-                wf_path = os.path.join(subj_out_dir, wf)
-                try:
-                    if os.path.getsize(wf_path) > 0:
-                        with open(wf_path, 'r') as h:
-                            warns[wf] = h.readlines()
-                except FileNotFoundError:
-                    pass
-            if len(warns) > 0:
-                config['warnings'] = warns
+                pbs = glob(os.path.join(task_out_dir, 'pb*'))
+                if len(pbs) > 0:
+                    pb_lod = []
+                    for pb in pbs:
+                        pbd = {}
+                        pbn = pb.split('/')[-1].split('.')
+                        pbd['path'] = pb
+                        pbd['filename'] = pb.split('/')[-1]
+                        pbd['pb'] = int(pbn[0][-2:])
+                        pbd['subj'] = pbn[1]
+                        pbd['run'] = int(pbn[2][-2:])
+                        pbd['block'] = pbn[3].split('+')[0]
+                        pbd['orientation'] = pbn[3].split('+')[-1]
+                        pb_lod.append(pbd)
+                    pb_df = pd.DataFrame(pb_lod)
+                    config['subj_id'] = pb_df.subj.unique()[0]
+                    config['task_label'] = task_label
+                    config['num_runs'] = len(pb_df.run.unique())
+                    config['blocks'] = ' '.join(pb_df.block.unique())
+                    config['report_num'] = report_num
+                    report_num += 1
+                    if session_label != '':
+                        config['session_label'] = session_label
 
-            if not os.path.exists(subj_qc_dir):
-                os.mkdir(subj_qc_dir)
-            if not os.path.exists(subj_qc_img_dir):
-                os.mkdir(subj_qc_img_dir)
-            if not os.path.exists(reports_dir):
-                os.mkdir(reports_dir)
+                    try:
+                        mot_path = make_motion_plot(task_out_dir, subject_label)
+                        config['motion_report'] = read_report_snippet(mot_path)
+                    except FileNotFoundError:
+                        pass
 
-            try:
+                    warn_list = ['3dDeconvolve.err',
+                                 'out.pre_ss_warn.txt',
+                                 'out.cormat_warn.txt']
 
-                anat_path = os.path.join(subj_out_dir, 'anat_final.%s+tlrc.HEAD'%subject_label)
-                anat_exts = np.array([float(ss) for ss in subprocess.check_output(["3dinfo", "-extent", anat_path]).decode().split('\t')])
-                anat_lrext = np.abs(anat_exts[0]) + np.abs(anat_exts[1])
-                anat_mont_dim = np.floor(np.sqrt(anat_lrext))
-                print("#######\n mont_dim = %f \n#########"%anat_mont_dim)
-                run(make_montage(os.path.join(subj_qc_img_dir, 'anatomical_montage'),
-                                 ulay=anat_path,
-                                 montx=anat_mont_dim, monty=anat_mont_dim), shell=True)
-                
+                    warns = {}
+                    for wf in warn_list:
+                        wf_path = os.path.join(task_out_dir, wf)
+                        try:
+                            if os.path.getsize(wf_path) > 0:
+                                with open(wf_path, 'r') as h:
+                                    warns[wf] = h.readlines()
+                                warns[wf] = [ww.replace('\n', '') for ww in warns[wf]]
+                        except FileNotFoundError:
+                            pass
+                    if len(warns) > 0:
+                        config['warnings'] = warns
 
-                func_path = pb_df.loc[pb_df['block'] == 'volreg', 'path'].values[0] + '[0]'
-                func_rext = float(subprocess.check_output(["3dinfo", "-Rextent", func_path]))
-                func_lext = float(subprocess.check_output(["3dinfo", "-Lextent", func_path]))
-                func_lrext = np.abs(func_lext) + np.abs(func_rext)
-                func_mont_dim = np.floor(np.sqrt(func_lrext))
+                    if not os.path.exists(task_qc_dir):
+                        os.mkdir(task_qc_dir)
+                    if not os.path.exists(task_qc_img_dir):
+                        os.mkdir(task_qc_img_dir)
+                    if not os.path.exists(reports_dir):
+                        os.mkdir(reports_dir)
 
-                run(make_montage(os.path.join(subj_qc_img_dir, 'functional_montage'),
-                                 ulay=anat_path,
-                                 olay=func_path, montx=anat_mont_dim, monty=anat_mont_dim,
-                                 cbar='gray_scale', opacity=9), shell=True)
+                    try:
 
-                with open(os.path.join(subj_qc_img_dir, 'anatomical_montage.sag.jpg'), 'rb') as h:
-                    anat_bs = base64.b64encode(h.read()).decode()
-                with open(os.path.join(subj_qc_img_dir, 'functional_montage.sag.jpg'), 'rb') as h:
-                    func_bs = base64.b64encode(h.read()).decode()
+                        anat_path = os.path.join(task_out_dir, 'anat_final.%s+tlrc.HEAD'%subject_label)
+                        anat_exts = np.array([float(ss) for ss in subprocess.check_output(["3dinfo", "-extent", anat_path]).decode().split('\t')])
+                        anat_lrext = np.abs(anat_exts[0]) + np.abs(anat_exts[1])
+                        anat_mont_dim = np.floor(np.sqrt(anat_lrext))
+                        print("#######\n mont_dim = %f \n#########"%anat_mont_dim)
+                        run(make_montage(os.path.join(task_qc_img_dir, 'anatomical_montage'),
+                                         ulay=anat_path,
+                                         montx=anat_mont_dim, monty=anat_mont_dim), shell=True)
+                        
 
-                config['volreg_report_anat'] = anat_bs
-                config['volreg_report_func'] = func_bs
-                config['anat_ap_ext'] = np.abs(anat_exts[2]) + np.abs(anat_exts[3]) + 1
-                config['anat_is_ext'] = np.abs(anat_exts[4]) + np.abs(anat_exts[5]) + 1
-                print("#######\n anat_ap_ext = %f \n#########"%config['anat_ap_ext'])
-            except (FileNotFoundError, ValueError):
-                pass
+                        func_path = pb_df.loc[pb_df['block'] == 'volreg', 'path'].values[0] + '[0]'
+                        func_rext = float(subprocess.check_output(["3dinfo", "-Rextent", func_path]))
+                        func_lext = float(subprocess.check_output(["3dinfo", "-Lextent", func_path]))
+                        func_lrext = np.abs(func_lext) + np.abs(func_rext)
+                        func_mont_dim = np.floor(np.sqrt(func_lrext))
 
-            tpl = IndividualTemplate()
-            tpl.generate_conf(config, os.path.join(reports_dir, 'sub-%s_individual.html'%subject_label))
+                        run(make_montage(os.path.join(task_qc_img_dir, 'functional_montage'),
+                                         ulay=anat_path,
+                                         olay=func_path, montx=anat_mont_dim, monty=anat_mont_dim,
+                                         cbar='gray_scale', opacity=9), shell=True)
 
-            with open(os.path.join(subj_qc_dir, 'individual.json'), 'w') as h:
-                json.dump(config, h)
+                        with open(os.path.join(task_qc_img_dir, 'anatomical_montage.sag.jpg'), 'rb') as h:
+                            anat_bs = base64.b64encode(h.read()).decode()
+                        with open(os.path.join(task_qc_img_dir, 'functional_montage.sag.jpg'), 'rb') as h:
+                            func_bs = base64.b64encode(h.read()).decode()
 
-    elif args.analysis_level == 'group':
-        with open(os.path.join(subj_qc_dir, 'individual.json'), 'r') as h:
-            all_configs.append(json.load(h))
+                        config['volreg_report_anat'] = anat_bs
+                        config['volreg_report_func'] = func_bs
+                        config['anat_ap_ext'] = np.abs(anat_exts[2]) + np.abs(anat_exts[3]) + 1
+                        config['anat_is_ext'] = np.abs(anat_exts[4]) + np.abs(anat_exts[5]) + 1
+                        print("#######\n anat_ap_ext = %f \n#########"%config['anat_ap_ext'])
+                    except (FileNotFoundError, ValueError):
+                        pass
+
+                    tpl = IndividualTemplate()
+                    if sessions_exist:
+                        tpl.generate_conf(config, os.path.join(reports_dir, 'sub-%s_ses-%s_task-%s_individual.html'%(subject_label, session_label, task_label)))
+                    else:
+                        tpl.generate_conf(config, os.path.join(reports_dir, 'sub-%s_task-%s_individual.html'%(subject_label, task_label)))
+
+                    with open(os.path.join(task_qc_dir, 'individual.json'), 'w') as h:
+                        json.dump(config, h)
+
+            elif args.analysis_level == 'group':
+                with open(os.path.join(task_qc_dir, 'individual.json'), 'r') as h:
+                    all_configs.append(json.load(h))
 
 if args.analysis_level == 'group':
     if not os.path.exists(reports_dir):
