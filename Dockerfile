@@ -16,7 +16,9 @@ ARG DEBIAN_FRONTEND=noninteractive
 #----------------------------------------------------------
 ENV LANG="en_US.UTF-8" \
     LC_ALL="C.UTF-8" \
-    ND_ENTRYPOINT="/neurodocker/startup.sh"
+    ND_ENTRYPOINT="/neurodocker/startup.sh" \
+    AFNI_NIFTI_VIEW="orig"
+
 RUN apt-get update -qq && apt-get install -yq --no-install-recommends  \
     	apt-utils bzip2 ca-certificates curl locales unzip \
     && apt-get clean \

@@ -320,8 +320,8 @@ for subject_label in subjects_to_analyze:
                 if not args.report_only:
                     print(' '.join(cmd), flush = True)
                     run(cmd)
-                    print("set -o pipefail && tcsh -xef {ses_dir}/proc.bids.{subj_id}.{ses_id}.{task_id} 2>&1 | tee {ses_dir}/output.proc.bids.{subj_id}.{ses_id}.{task_id}".format(subj_id = subject_label,ses_id = session_label, task_id = task_label, ses_dir = session_out_dir), flush = True)
-                    run("set -o pipefail && tcsh -xef {ses_dir}/proc.bids.{subj_id}.{ses_id}.{task_id}  2>&1 | tee {ses_dir}/output.proc.bids.{subj_id}.{ses_id}.{task_id}".format(subj_id = subject_label,ses_id = session_label, task_id = task_label, ses_dir = session_out_dir), shell=True)
+                    print("""/bin/bash -x "set -o pipefail && tcsh -xef {ses_dir}/proc.bids.{subj_id}.{ses_id}.{task_id} 2>&1 | tee {ses_dir}/output.proc.bids.{subj_id}.{ses_id}.{task_id}"""".format(subj_id = subject_label,ses_id = session_label, task_id = task_label, ses_dir = session_out_dir), flush = True)
+                    run("""/bin/bash -x "set -o pipefail && tcsh -xef {ses_dir}/proc.bids.{subj_id}.{ses_id}.{task_id}  2>&1 | tee {ses_dir}/output.proc.bids.{subj_id}.{ses_id}.{task_id}""""".format(subj_id = subject_label,ses_id = session_label, task_id = task_label, ses_dir = session_out_dir), shell=True)
                     run("mv  {ses_dir}/proc.bids.{subj_id}.{ses_id}.{task_id} {out_dir};mv  {ses_dir}/output.proc.bids.{subj_id}.{ses_id}.{task_id} {out_dir}".format(subj_id = subject_label,ses_id = session_label, task_id = task_label, ses_dir = session_out_dir, out_dir = task_out_dir), shell=True)
 
                 pbs = glob(os.path.join(task_out_dir, 'pb*'))
