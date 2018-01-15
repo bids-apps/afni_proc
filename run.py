@@ -380,13 +380,13 @@ for subject_label in subjects_to_analyze:
 
                     try:
 
-                        anat_path = os.path.join(task_out_dir, 'anat_final.%s+tlrc.HEAD'%subject_label)
-                        anat_exts = np.array([float(ss) for ss in subprocess.check_output(["3dinfo", "-extent", anat_path]).decode().split('\t')])
+                        anat_out_path = os.path.join(task_out_dir, 'anat_final.%s+tlrc.HEAD'%subject_label)
+                        anat_exts = np.array([float(ss) for ss in subprocess.check_output(["3dinfo", "-extent", anat_out_path]).decode().split('\t')])
                         anat_lrext = np.abs(anat_exts[0]) + np.abs(anat_exts[1])
                         anat_mont_dim = np.floor(np.sqrt(anat_lrext))
                         print("#######\n mont_dim = %f \n#########"%anat_mont_dim)
                         run(make_montage(os.path.join(task_qc_img_dir, 'anatomical_montage'),
-                                         ulay=anat_path,
+                                         ulay=anat_out_path,
                                          montx=anat_mont_dim, monty=anat_mont_dim), shell=True)
                         
 
@@ -397,7 +397,7 @@ for subject_label in subjects_to_analyze:
                         func_mont_dim = np.floor(np.sqrt(func_lrext))
 
                         run(make_montage(os.path.join(task_qc_img_dir, 'functional_montage'),
-                                         ulay=anat_path,
+                                         ulay=anat_out_path,
                                          olay=func_path, montx=anat_mont_dim, monty=anat_mont_dim,
                                          cbar='gray_scale', opacity=9), shell=True)
 
