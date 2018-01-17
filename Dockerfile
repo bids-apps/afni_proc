@@ -7,7 +7,7 @@
 #
 # Timestamp: 2017-11-27 21:13:04
 
-FROM ubuntu:17.04
+FROM ubuntu:17.10
 
 ARG DEBIAN_FRONTEND=noninteractive
 
