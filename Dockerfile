@@ -20,7 +20,7 @@ ENV LANG="en_US.UTF-8" \
     AFNI_NIFTI_VIEW="orig"
 
 RUN apt-get update -qq && apt-get install -yq --no-install-recommends  \
-    	apt-utils bzip2 ca-certificates curl locales unzip \
+        apt-utils bzip2 ca-certificates curl locales unzip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && localedef --force --inputfile=en_US --charmap=UTF-8 C.UTF-8 \
@@ -55,7 +55,12 @@ RUN apt-get update -qq && apt-get install -yq --no-install-recommends ed gsl-bin
        curl -o /tmp/libpng12.deb -sSL http://mirrors.kernel.org/debian/pool/main/libp/libpng/libpng12-0_1.2.49-1%2Bdeb7u2_amd64.deb \
        && dpkg -i /tmp/libpng12.deb && rm -f /tmp/libpng12.deb" \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+    && echo "Downloading AFNI ..." \
+    && mkdir -p /opt/afni \
+    && curl -sSL --retry 5 https://afni.nimh.nih.gov/pub/dist/tgz/linux_openmp_64.tgz \
+    | tar zx -C /opt/afni --strip-components=1 \
+    && pip3 install jinja2 pandas matplotlib
 
 #-----------------------
 # Install bids validator
@@ -69,15 +74,6 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN npm install -g bids-validator@0.24.0
-
-
-
-
-RUN echo "Downloading AFNI ..." \
-    && mkdir -p /opt/afni \
-    && curl -sSL --retry 5 https://afni.nimh.nih.gov/pub/dist/tgz/linux_openmp_64.tgz \
-    | tar zx -C /opt/afni --strip-components=1 \
-    && pip3 install jinja2 pandas matplotlib
 
 COPY run.py /run.py
 COPY . /code
