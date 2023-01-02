@@ -148,11 +148,11 @@
   <li>Warnings:
     <ul class="sub-simple">
     {% for warn_name, warn_text in config['warnings'].items() %}
-      <li>{{ warn_name }}: 
+      <li>{{ warn_name }}:
       {% for line in warn_text %}
         {{ line }}<br />
       {% endfor %}
-      </li> 
+      </li>
     {% endfor %}
     </ul>
   </li>

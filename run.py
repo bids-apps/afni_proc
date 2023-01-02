@@ -99,7 +99,7 @@ def make_montage(prefix, ulay=None, olay=None, cbar='FreeSurfer_Seg_i255',
         cmd += ' -olay ' + olay
         cmd += ' -set_dicom_xyz `3dCM {i}`'.format(i=olay)
         cmd += ' -cbar ' + cbar + \
-               ' -opacity %d'%opacity 
+               ' -opacity %d'%opacity
     else:
         cmd += ' -olay_off'
         cmd += ' -set_dicom_xyz `3dCM {i}`'.format(i=ulay)
@@ -117,16 +117,16 @@ def make_motion_plot(subj_dir, subj_id):
     # Read the three files in
     motion_file = os.path.join(subj_dir,'dfile_rall.1D')
     motion = pd.read_csv(motion_file, sep='\s*', engine = 'python', names = ['$\Delta$A-P [mm]','$\Delta$L-R [mm]','$\Delta$I-S [mm]','Yaw [$^\circ$]','Pitch [$^\circ$]','Roll [$^\circ$]'])
-    
+
     enorm_file = os.path.join(subj_dir,'motion_{subj_id}_enorm.1D'.format(subj_id=subj_id))
     enorm = pd.read_csv(enorm_file, sep='\s*', engine = 'python', names = ['enorm'])
 
     outlier_file = os.path.join(subj_dir,'outcount_rall.1D')
     outliers = pd.read_csv(outlier_file, sep='\s*', engine = 'python', names = ['outliers'])
-    
+
     # make a dataframe
     mot_df = pd.concat([outliers,enorm,motion], axis = 1)
-    
+
     # Plot the dataframe
     axs = mot_df.plot(subplots = True, figsize = (4,5))
     ldgs = []
@@ -144,7 +144,7 @@ def make_motion_plot(subj_dir, subj_id):
     if not os.path.exists(img_dir):
         os.mkdir(img_dir)
     out_path = os.path.join(img_dir,'motion_plot.svg')
-    
+
     plt.savefig(out_path, tight_layout = True, bbox_extra_artists=ldgs, bbox_inches='tight')
     return out_path
 
@@ -276,15 +276,15 @@ for subject_label in subjects_to_analyze:
         else:
             sessions_to_analyze = sessions_list
     else:
-        sessions_exist = False 
+        sessions_exist = False
         sessions_to_analyze = ['']
-    
+
     for session_label in sessions_to_analyze:
         if sessions_exist:
             session_out_dir = os.path.join(subj_out_dir,"ses-%s"%session_label)
         else:
             session_out_dir = subj_out_dir
-        os.makedirs(session_out_dir, exist_ok = True) 
+        os.makedirs(session_out_dir, exist_ok = True)
 
         all_epi_paths = sorted(set(glob(os.path.join(args.bids_dir, "sub-%s"%subject_label,
                                                     "func", "*bold.nii*")) + glob(os.path.join(args.bids_dir,"sub-%s"%subject_label,"ses-%s"%session_label,"func", "*bold.nii*"))))
@@ -299,15 +299,15 @@ for subject_label in subjects_to_analyze:
             tasks_to_analyze = sorted(set(args.task_label[0].split(' ')).intersection(tasks_in_session))
         else:
             tasks_to_analyze = sorted(tasks_in_session)
-            
+
         for task_label in tasks_to_analyze:
             epi_paths = ' '.join(sorted(set(glob(os.path.join(args.bids_dir, "sub-%s"%subject_label,
                                                     "func", "*%s*bold.nii*"%task_label)) + glob(os.path.join(args.bids_dir,"sub-%s"%subject_label,"ses-%s"%session_label,"func", "*%s*bold.nii*"%task_label)))))
-            
+
             task_out_dir = os.path.join(session_out_dir,task_label)
             task_qc_dir = os.path.join(task_out_dir, 'qc')
             task_qc_img_dir = os.path.join(task_qc_dir, 'img')
-        
+
             if args.analysis_level == 'participant':
 
                 config = {}
@@ -388,7 +388,7 @@ for subject_label in subjects_to_analyze:
                         run(make_montage(os.path.join(task_qc_img_dir, 'anatomical_montage'),
                                          ulay=anat_out_path,
                                          montx=anat_mont_dim, monty=anat_mont_dim), shell=True)
-                        
+
 
                         func_path = pb_df.loc[pb_df['block'] == 'volreg', 'path'].values[0] + '[0]'
                         func_rext = float(subprocess.check_output(["3dinfo", "-Rextent", func_path]))

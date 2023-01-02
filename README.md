@@ -3,9 +3,9 @@
 ### Description
 This is a prototype AFNI bids app implmenting participant level preprocessing with afni_proc.py.
 This pipeline is currently doing temporal alignment, nonlinear registration to standard space,
- bluring of 4 mm, masking, and scaling for all epis in the input bids dataset using the following 
+ bluring of 4 mm, masking, and scaling for all epis in the input bids dataset using the following
  afni proc command:
- 
+
 ```bash
 afni_proc.py -subj_id {subj_id} \
   -script proc.bids -scr_overwrite -out_dir {out_dir} \

@@ -2,10 +2,10 @@
 
 # -----------------------------------------------------------------
 # Multipurpose, driven viewer.  Meant to be used for auto QC in
-# scripts. 
-# 
+# scripts.
+#
 # This function constructed by: PA Taylor (NIMH, NIH, USoA)
-# 
+#
 # Dec, 2016:
 #     + conception and start.
 #
@@ -14,7 +14,7 @@
 #
 # Jan, 2017b:
 #     + if ulay/olay are in different files, have tmp readdir.
-#     + default now to proceed if no olay given but also no 
+#     + default now to proceed if no olay given but also no
 #       '-olay_off' is used.
 #
 # Jan, 2017c:
@@ -36,22 +36,22 @@
 #set version   = "2.3";   set rev_dat   = "May 3, 2017"
 #     + xvfb-run: new option to set colordepth to 24, so opacity works
 #       in the AFNI commands
-# 
+#
 #set version   = "2.4";   set rev_dat   = "May 20, 2017"
 #     + more unique naming of tempdir; safer for cluster runs
-# 
+#
 #set version   = "2.5";   set rev_dat   = "June 1, 2017"
 #     + back to regular xvfb and Bob's search
-# 
+#
 #set version   = "2.6";   set rev_dat   = "June 1, 2017"
 #     + default interpolation to NN, but add in option to set
-# 
+#
 #set version   = "2.7";   set rev_dat   = "June 20, 2017"
 #     + new opts, for SET_SUBBRICKS
-# 
+#
 #set version   = "2.8";   set rev_dat   = "Aug 17, 2017"
 #     + new opt, allow SET_XYZ
-# 
+#
 #set version   = "2.9";   set rev_dat   = "Sep 04, 2017"
 #     + remove '-outdir ...' and have path set by '-prefix ...',
 #       like most other AFNI programs
@@ -81,13 +81,13 @@ setenv AFNI_ENVIRON_WARNINGS  NO
 setenv AFNI_COMPRESSOR        NONE
 setenv AFNI_IMAGE_GLOBALRANGE VOLUME
 setenv AFNI_IMAGE_LABEL_IJK   NO         # thanks, Bob!
-setenv AFNI_IMAGE_ZOOM_NN     YES        # [PT: Sep 04, 2017] 
+setenv AFNI_IMAGE_ZOOM_NN     YES        # [PT: Sep 04, 2017]
 # -------------------------------------------------------------------
 
 # ------------------- default/initialized variables -----------------
 
-set ulay = ""                    # inp underlay 
-set olay = ""                    # inp overlay  
+set ulay = ""                    # inp underlay
+set olay = ""                    # inp overlay
 set see_olay = "+"               # turn *off* olay disp
 
 set ftype = PNG                  # output file format
@@ -125,8 +125,8 @@ set func_resam = "NN"            # def. no resample; opt: {NN|Li|Cu|Bk}
 set subbb = ( -1 -1 -1 )
 
 # for SET_FUNC_ALPHA
-set alpha_par    = "Off"         # 
-set alpha_floor  = ""            # 
+set alpha_par    = "Off"         #
+set alpha_floor  = ""            #
 set alpha_edgize_no = 0          # =1 -> SETENV AFNI_EDGIZE_OVERLAY NO
 
 set do_quit = "QUITT"            # quick-quit; not subject to change
@@ -186,7 +186,7 @@ while ( $ac <= $#argv )
         #set impref = "$argv[$ac]"
         set impref = `basename "$argv[$ac]"`
         set odir   = `dirname  "$argv[$ac]"`
-        
+
     else if ( "$argv[$ac]" == "-cbar" ) then
         if ( $ac >= $#argv ) goto FAIL_MISSING_ARG
         @ ac += 1
@@ -196,17 +196,17 @@ while ( $ac <= $#argv )
         if ( $ac >= $#argv ) goto FAIL_MISSING_ARG
         @ ac += 1
         set bufac = "$argv[$ac]"
-        
+
     else if ( "$argv[$ac]" == "-set_xhairs" ) then
         if ( $ac >= $#argv ) goto FAIL_MISSING_ARG
         @ ac += 1
         set crossh = "$argv[$ac]"
-        
+
     else if ( "$argv[$ac]" == "-opacity" ) then
         if ( $ac >= $#argv ) goto FAIL_MISSING_ARG
         @ ac += 1
         set opac = "$argv[$ac]"
-        
+
     else if ( "$argv[$ac]" == "-delta_slices" ) then
         if ( $ac >= $#argv ) goto FAIL_MISSING_ARG
         @ ac += 1
@@ -222,7 +222,7 @@ while ( $ac <= $#argv )
         if ( $ac >= $#argv ) goto FAIL_MISSING_ARG
         @ ac += 1
         set thrnew = "$argv[$ac]"
-        
+
     else if ( "$argv[$ac]" == "-thrflag" ) then
         if ( $ac >= $#argv ) goto FAIL_MISSING_ARG
         @ ac += 1
@@ -244,7 +244,7 @@ while ( $ac <= $#argv )
         @ ac += 1
         set frange = "$argv[$ac]"
         set USER_FRANGE = 1
-        
+
     #  SET_FUNC_RESAM [c.]{NN|Li|Cu|Bk}[.{NN|Li|Cu|Bk}]
     else if ( "$argv[$ac]" == "-func_resam" ) then
         if ( $ac >= $#argv ) goto FAIL_MISSING_ARG
@@ -268,17 +268,17 @@ while ( $ac <= $#argv )
 
     else if ( "$argv[$ac]" == "-pbar_posonly" ) then
         set pbar_sign = "+"
-        
+
     else if ( "$argv[$ac]" == "-cbar_ncolors" ) then
         if ( $ac >= $#argv ) goto FAIL_MISSING_ARG
         @ ac += 1
         set ncolors = "$argv[$ac]"
-        
+
     else if ( "$argv[$ac]" == "-cbar_topval" ) then
         if ( $ac >= $#argv ) goto FAIL_MISSING_ARG
         @ ac += 1
         set topval = "$argv[$ac]"
-        
+
     # SAVE_ALLJPEG [c].imagewindowname filename
     # SAVE_ALLPNG  [c].imagewindowname filename
     # SAVE_MPEG    [c].imagewindowname filename
@@ -317,12 +317,12 @@ while ( $ac <= $#argv )
         if ( $ac >= $#argv ) goto FAIL_MISSING_ARG
         @ ac += 1
         set mx = "$argv[$ac]"
-        
+
     else if ( "$argv[$ac]" == "-monty" ) then
         if ( $ac >= $#argv ) goto FAIL_MISSING_ARG
         @ ac += 1
         set my = "$argv[$ac]"
-        
+
     else if ( "$argv[$ac]" == "-alpha_par" ) then
         if ( $ac >= $#argv ) goto FAIL_MISSING_ARG
         @ ac += 1
@@ -332,13 +332,13 @@ while ( $ac <= $#argv )
         if ( $ac >= $#argv ) goto FAIL_MISSING_ARG
         @ ac += 1
         set alpha_floor = "$argv[$ac]"
-        
+
     else if ( "$argv[$ac]" == "-alpha_edgize_no" ) then
         setenv AFNI_EDGIZE_OVERLAY NO
 
     else if ( "$argv[$ac]" == "-image_zoom_nn_no" ) then
         setenv AFNI_IMAGE_ZOOM_NN NO
-        
+
     else if ( "$argv[$ac]" == "-zerocolor" ) then
         if ( $ac >= $#argv ) goto FAIL_MISSING_ARG
         @ ac += 1
@@ -384,7 +384,7 @@ while ( $ac <= $#argv )
         if ( $ac >= $#argv ) goto FAIL_MISSING_ARG
         @ ac += 1
         setenv AFNI_IMAGE_GLOBALRANGE  "$argv[$ac]"
-        
+
     else if ( "$argv[$ac]" == "-ulay_range" ) then
         if ( $ac >= $#argv ) goto FAIL_MISSING_ARG
         @ ac += 1
@@ -435,7 +435,7 @@ endif
 # -------------------------------------------------------------------
 # -------------------------- check INPUTS ---------------------------
 
-echo "\n------------------ start of optionizing ------------------\n" 
+echo "\n------------------ start of optionizing ------------------\n"
 
 # need more cowbell
 if ( ("$ulay" == "") ) then
@@ -447,7 +447,7 @@ endif
 if (( "$olay" == "" ) && ( "$see_olay" == "+" )) then
     echo "+* Noting: you did NOT provide an overlay, and yet"
     echo "           you did NOT turn off the overlay with '-olay_off'"
-    echo "       --> so I assume you just want to view the underlay." 
+    echo "       --> so I assume you just want to view the underlay."
     set see_olay = "-"
 endif
 
@@ -510,7 +510,7 @@ if ( ( $urange == "VOLUME" ) || ( $urange == "DSET" )  \
 
             set amin  = `3dBrickStat $ulay_nz -percentile ${umin} 1 ${umin} "$ulay"`
             set amax  = `3dBrickStat $ulay_nz -percentile ${umax} 1 ${umax} "$ulay"`
-                
+
             set umin = $amin[2]
             set umax = $amax[2]
 
@@ -645,8 +645,8 @@ set cmx = `echo $xo2 | perl -nl -MPOSIX -e 'print ceil($_);'`
 set yo2 = `echo "scale=2; ( $my + 1 ) / 2." | bc`
 set cmy = `echo $yo2 | perl -nl -MPOSIX -e 'print ceil($_);'`
 
-@ tot     = $mx * $my 
-@ hpan    = ( ( $cmy - 1 ) * $mx ) + $cmx    
+@ tot     = $mx * $my
+@ hpan    = ( ( $cmy - 1 ) * $mx ) + $cmx
 #echo "$cmx $cmy $tot $hpan"
 set pfrac = `echo "scale=5; ( $hpan / ( $tot + 1 ) ) " | bc` # ????
 echo "++ pfrac = $pfrac"
@@ -679,7 +679,7 @@ else
     echo "++ Will have: $coor_type $coors"
 endif
 
-echo "\n------------------- end of optionizing -------------------\n" 
+echo "\n------------------- end of optionizing -------------------\n"
 
 # -------------------------------------------------------------------
 # ------------------------- Make virtual frame ----------------------
@@ -752,7 +752,7 @@ if ( $DO_CLEAN ) then
 else
     echo "\n++ NOT removing temporary directory '$odir/$tmp_dir'.\n"
 endif
- 
+
 goto GOOD_EXIT
 
 # ===========================================================================
@@ -765,7 +765,7 @@ SHOW_VERSION:
 
     goto GOOD_EXIT
 
-# ---------------------------------- 
+# ----------------------------------
 
 SHOW_HELP:
 
@@ -812,14 +812,14 @@ For example, "(see ENV: SAVE_AGIF)".
 -ver               :see version number
 
 -ulay    UUU       :name of underlay dset (required); can be 3D or 4D
-                    set, depending on the circumstances.  For 4D, 
+                    set, depending on the circumstances.  For 4D,
                     though, strongly consider using "@djunct_4d_imager".
 
 -olay    OOO       :name of overlay dset (opt).
 
 -olay_off          :explicitly state you are not using olay (opt);
                     if not used and no olay is given, then the user
-                    just gets prompted to be sure they haven't 
+                    just gets prompted to be sure they haven't
                     forgotten the olay dset.
 
 -prefix  PPP       :prefix for output files (required).
@@ -827,14 +827,14 @@ For example, "(see ENV: SAVE_AGIF)".
 -cbar    CCC       :specify a new colorbar, where CCC can be any of the
                     cbars in the standard AFNI list (def: $my_cbar).
 
--blowup  BB        :enter a "blowup factor", where BB is an integer 
+-blowup  BB        :enter a "blowup factor", where BB is an integer
                     in the interval [1, 8].  Increases spatial resolution
                     in the output by a factor of BB (see DR).
 
 -set_xhairs XX     :specify type and/or existence of crosshairs in the
                     image (see DR: SET_XHAIRS).
 
--opacity   OO      :enter an "opacity factor" for the olay, where OO is 
+-opacity   OO      :enter an "opacity factor" for the olay, where OO is
                     an integer in the interval [0, 9], with the 9 being
                     opaque (see DR).
 
@@ -850,13 +850,13 @@ For example, "(see ENV: SAVE_AGIF)".
                      specifying a D? value >0 for their own value, and
                      given any other D? value -1.  For example:
                       -delta_slices 40 -1 -1
-                     would specify every 40th slice along the sag axis, 
-                     while the cor and axi spacing would be automatically 
+                     would specify every 40th slice along the sag axis,
+                     while the cor and axi spacing would be automatically
                      calculated.
 
--thr_olay  THR     :threshold the olay dset at THR (def: 0, or 
+-thr_olay  THR     :threshold the olay dset at THR (def: 0, or
                     unthreshold). (See DR: SET_THRESHNEW)
--thrflag   'fff'   :further control of how the THR value is interpreted 
+-thrflag   'fff'   :further control of how the THR value is interpreted
                     (def: "*"). (See DR: SET_THRESHNEW)
 
 -set_subbricks i j k :specify subbricks being viewed in the ulay, olay
@@ -880,7 +880,7 @@ For example, "(see ENV: SAVE_AGIF)".
 
 -func_resam  RES   :set the resampling mode for dsets; valid values
                     are:   NN  Li  Cu  Bk
-                    (def: NN; hey, voxels are voxels!). 
+                    (def: NN; hey, voxels are voxels!).
                     (See DR: SET_FUNC_RESAM)
 
 -cbar_ncolors NC   :set colorscale mode (def: 99) (See DR:
@@ -908,14 +908,14 @@ For example, "(see ENV: SAVE_AGIF)".
                     each coordinate, choose middle slice along axis).
 
 -montx  MX         :in creating montage, the number of image panels
-                    in a row (def: 3); the total number of panels per 
+                    in a row (def: 3); the total number of panels per
                     axis is:  MX*MY   (see below "-monty ...").
-                    (See DR: "mont=PxQ:R"; basically, MX is the 'P' 
+                    (See DR: "mont=PxQ:R"; basically, MX is the 'P'
                     value).
 -monty  MY         :in creating montage, the number of image panels
                     in a column (def: 3); the total number of panels
                     per axis is:  MX*MY   (see above "-montx ...").
-                    (See DR: "mont=PxQ:R"; basically, MY is the 'Q' 
+                    (See DR: "mont=PxQ:R"; basically, MY is the 'Q'
                     value).
 
 -alpha_par  ALPHP  :In addition to representing olay values as colors
@@ -924,15 +924,15 @@ For example, "(see ENV: SAVE_AGIF)".
                     thresholding; see DR: SET_FUNC_ALPHA for a
                     description of this behavior (def: "Off", which is
                     just standard thresholding stuff).
--alpha_floor ALPHF :second parameter for more complicated olay 
+-alpha_floor ALPHF :second parameter for more complicated olay
                     thresholding behavior.  Too complicated for simple
-                    me to explain-- see DR: SET_FUNC_ALPHA (def: ""; 
+                    me to explain-- see DR: SET_FUNC_ALPHA (def: "";
                     this empty string means use default
-                    value, which at time of writing is 0) 
--alpha_edgize_no   :even *more* control over fancy alpha-based 
-                    thresholding; for this, see ENV: 
+                    value, which at time of writing is 0)
+-alpha_edgize_no   :even *more* control over fancy alpha-based
+                    thresholding; for this, see ENV:
                     AFNI_EDGIZE_OVERLAY, whose default value is "YES".
-                    Using this option changes that value to 'NO' 
+                    Using this option changes that value to 'NO'
                     internally.
 
 -image_zoom_nn_no  :the default zoom is set to NN mode, so no smoothing
@@ -942,7 +942,7 @@ For example, "(see ENV: SAVE_AGIF)".
 
 -zerocolor ZC      :Change the default 'background' ulay color of zero
                     values (def: "Black"); ZC can be set to any allowed
-                    AFNI value (see ENV: AFNI_IMAGE_ZEROCOLOR).  This 
+                    AFNI value (see ENV: AFNI_IMAGE_ZEROCOLOR).  This
                     option is mainly for G. Chen, who flaunts convention
                     whenever possible.
 
@@ -989,7 +989,7 @@ EXAMPLES:
         -montx 5 -monty 3               \
         -set_xhairs OFF                 \
         -label_mode 1 -label_size 3     \
-        -do_clean  
+        -do_clean
 
 
     # 2) Make a 3x5 montage of an overlayed data set that has an ROI
@@ -1007,7 +1007,7 @@ EXAMPLES:
         -montx 5 -monty 3                 \
         -set_xhairs OFF                   \
         -label_mode 1 -label_size 3       \
-        -do_clean 
+        -do_clean
 
 # -------------------------------------------------------------------
 
@@ -1015,19 +1015,18 @@ EOF
 
     goto GOOD_EXIT
 
-# ---------------------------------- 
+# ----------------------------------
 
 FAIL_MISSING_ARG:
    echo "** missing parameter for option $argv[$ac]"
    goto BAD_EXIT
 
-# ---------------------------------- 
+# ----------------------------------
 
 BAD_EXIT:
     exit 1
 
-# ---------------------------------- 
+# ----------------------------------
 
 GOOD_EXIT:
     exit 0
-
