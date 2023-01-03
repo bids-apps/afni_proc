@@ -16,27 +16,31 @@ jobs:
     - run: mkdir -p ${HOME}/data
 
     - run:
+        name: 'Get test data: ds114_test1'
         command: |
           if [[ ! -d ~/data/ds114_test1 ]]; then
-            wget -c -O ${HOME}/ds114_test1.tar "https://files.osf.io/v1/resources/9q7dv/providers/osfstorage/57e54a326c613b01d7d3ed90" && \
+            wget -c -O ${HOME}/ds114_test1.tar "https://osf.io/download/zerfq/" && \
+            mkdir -p ${HOME}/data && \
             tar xf ${HOME}/ds114_test1.tar -C ${HOME}/data;
           fi
     - run:
+        name: 'Get test data: ds114_test2'
         command: |
           if [[ ! -d ~/data/ds114_test2 ]]; then
-            wget -c -O ${HOME}/ds114_test2.tar "https://files.osf.io/v1/resources/9q7dv/providers/osfstorage/57e549f9b83f6901d457d162" && \
+            wget -c -O ${HOME}/ds114_test2.tar "https://osf.io/download/eg4ma/" && \
+            mkdir -p ${HOME}/data && \
             tar xf ${HOME}/ds114_test2.tar -C ${HOME}/data;
           fi
     - run:
+        name: Build Docker image
         command: |
-          if [[ -e ~/docker/image.tar ]]; then
-            docker load -i ~/docker/image.tar;
+          if [[ -e ~/docker/image.tar ]]; \
+            then docker load -i ~/docker/image.tar;
           fi
-    - run: git describe --tags --always > version
-    - run:
-        command: docker build -t bids/${CIRCLE_PROJECT_REPONAME,,} .
-        no_output_timeout: 6h
-    - run: mkdir -p ~/docker; docker save "bids/${CIRCLE_PROJECT_REPONAME,,}" > ~/docker/image.tar
+          git describe --tags --always > version
+          docker build -t bids/${CIRCLE_PROJECT_REPONAME,,} .
+          mkdir -p ${HOME}/docker
+          docker save "bids/${CIRCLE_PROJECT_REPONAME,,}" > ~/docker/image.tar
 
     - save_cache:
         key: my_cache
