@@ -32,7 +32,7 @@ RUN apt-get update -qq && apt-get install -yq --no-install-recommends  \
          && echo 'if [ -z "$*" ]; then /usr/bin/env bash; else $*; fi' >> $ND_ENTRYPOINT; \
        fi \
     && chmod -R 777 /neurodocker && chmod a+s /neurodocker
-ENTRYPOINT ["/neurodocker/startup.sh"]
+
 
 #--------------------
 # Install AFNI latest
