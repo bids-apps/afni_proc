@@ -60,7 +60,7 @@ jobs:
           name: participant level tests for single session dataset
           command: |
             docker run -ti --rm --read-only \
-              -v ${HOME}/data/ds114_test1:/bids_dataset \
+              /tmp/workspace/data/ds114_test1:/bids_dataset \
               -v ${HOME}/outputs1:/outputs \
                 bids/${CIRCLE_PROJECT_REPONAME,,} \
                   /bids_dataset /outputs participant \
@@ -76,7 +76,7 @@ jobs:
       - run:
           command: |
             docker run -ti --rm --read-only \
-              -v ${HOME}/data/ds114_test1:/bids_dataset \
+              /tmp/workspace/data/ds114_test1:/bids_dataset \
               -v ${HOME}/outputs1:/outputs bids/${CIRCLE_PROJECT_REPONAME,,} \
               /bids_dataset /outputs participant \
                 --participant_label 02
@@ -87,7 +87,7 @@ jobs:
           no_output_timeout: 6h
 
         # group level test for single session dataset
-        #- docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp -v ${HOME}/data/ds114_test1:/bids_dataset -v ${HOME}/outputs1:/outputs bids/${CIRCLE_PROJECT_REPONAME,,} /bids_dataset /outputs group :
+        #- docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp /tmp/workspace/data/ds114_test1:/bids_dataset -v ${HOME}/outputs1:/outputs bids/${CIRCLE_PROJECT_REPONAME,,} /bids_dataset /outputs group :
         #    timeout: 21600
 
       - run:
@@ -96,7 +96,7 @@ jobs:
             docker run -ti --rm --read-only \
               -v /tmp:/tmp \
               -v /var/tmp:/var/tmp \
-              -v ${HOME}/data/ds114_test2:/bids_dataset \
+              /tmp/workspace/data/ds114_test2:/bids_dataset \
               -v ${HOME}/outputs1:/outputs bids/${CIRCLE_PROJECT_REPONAME,,} \
                 /bids_dataset /outputs participant \
                 --participant_label 01 \
@@ -110,7 +110,7 @@ jobs:
             docker run -ti --rm --read-only \
               -v /tmp:/tmp \
               -v /var/tmp:/var/tmp \
-              -v ${HOME}/data/ds114_test2:/bids_dataset \
+              /tmp/workspace/data/ds114_test2:/bids_dataset \
               -v ${HOME}/outputs1:/outputs bids/${CIRCLE_PROJECT_REPONAME,,} \
                 /bids_dataset /outputs participant \
                 --participant_label 02 \
@@ -121,7 +121,7 @@ jobs:
           no_output_timeout: 6h
 
     # group level test for a longitudinal dataset
-    #- docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp -v ${HOME}/data/ds114_test2:/bids_dataset -v ${HOME}/outputs2:/outputs bids/${CIRCLE_PROJECT_REPONAME,,} /bids_dataset /outputs group :
+    #- docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp /tmp/workspace/data/ds114_test2:/bids_dataset -v ${HOME}/outputs2:/outputs bids/${CIRCLE_PROJECT_REPONAME,,} /bids_dataset /outputs group :
     #    timeout: 21600
 
   deployment:
