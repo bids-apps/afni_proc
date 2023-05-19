@@ -58,6 +58,8 @@ jobs:
           docker run -ti --rm --read-only \
             -v /tmp/workspace/data/ds114_test1:/bids_dataset \
             -v ${HOME}/outputs1:/outputs \
+            -v /tmp:/tmp \
+            -v /var/tmp:/var/tmp \
               bids/${CIRCLE_PROJECT_REPONAME,,} \
                 /bids_dataset /outputs participant \
                 --participant_label 01 \
@@ -70,10 +72,12 @@ jobs:
           docker run -ti --rm --read-only \
             -v /tmp/workspace/data/ds114_test1:/bids_dataset \
             -v ${HOME}/outputs1:/outputs bids/${CIRCLE_PROJECT_REPONAME,,} \
-            /bids_dataset /outputs participant \
-              --participant_label 02
-              --afni_proc \
-                '-subj_id {subj_id} -script proc.bids -scr_overwrite -out_dir {out_dir} -blocks tshift volreg blur scale -copy_anat {anat_path} -tcat_remove_first_trs 0 -dsets {epi_paths} -volreg_align_to MIN_OUTLIER -blur_size 4.0 -bash'
+            -v /tmp:/tmp \
+            -v /var/tmp:/var/tmp \
+              /bids_dataset /outputs participant \
+                --participant_label 02
+                --afni_proc \
+                  '-subj_id {subj_id} -script proc.bids -scr_overwrite -out_dir {out_dir} -blocks tshift volreg blur scale -copy_anat {anat_path} -tcat_remove_first_trs 0 -dsets {epi_paths} -volreg_align_to MIN_OUTLIER -blur_size 4.0 -bash'
         no_output_timeout: 6h
 
         # group level test for single session dataset
@@ -91,10 +95,9 @@ jobs:
               /bids_dataset /outputs participant \
               --participant_label 01 \
               --afni_proc \
-                '-subj_id {subj_id} -script proc.bids -scr_overwrite -out_dir {out_dir} \
-                -blocks tshift volreg blur scale -copy_anat {anat_path} -tcat_remove_first_trs 0 \
-                -dsets {epi_paths} -volreg_align_to MIN_OUTLIER -blur_size 4.0 -bash'
+                  '-subj_id {subj_id} -script proc.bids -scr_overwrite -out_dir {out_dir} -blocks tshift volreg blur scale -copy_anat {anat_path} -tcat_remove_first_trs 0 -dsets {epi_paths} -volreg_align_to MIN_OUTLIER -blur_size 4.0 -bash'
         no_output_timeout: 6h
+
     - run:
         command: |
           docker run -ti --rm --read-only \
@@ -105,10 +108,9 @@ jobs:
               /bids_dataset /outputs participant \
               --participant_label 02 \
               --afni_proc \
-                '-subj_id {subj_id} -script proc.bids -scr_overwrite -out_dir {out_dir} \
-                -blocks tshift volreg blur scale -copy_anat {anat_path} -tcat_remove_first_trs 0 \
-                -dsets {epi_paths} -volreg_align_to MIN_OUTLIER -blur_size 4.0 -bash'
+                  '-subj_id {subj_id} -script proc.bids -scr_overwrite -out_dir {out_dir} -blocks tshift volreg blur scale -copy_anat {anat_path} -tcat_remove_first_trs 0 -dsets {epi_paths} -volreg_align_to MIN_OUTLIER -blur_size 4.0 -bash'
         no_output_timeout: 6h
+
 
     # group level test for a longitudinal dataset
     #- docker run -ti --rm --read-only -v /tmp:/tmp -v /var/tmp:/var/tmp /tmp/workspace/data/ds114_test2:/bids_dataset -v ${HOME}/outputs2:/outputs bids/${CIRCLE_PROJECT_REPONAME,,} /bids_dataset /outputs group :
