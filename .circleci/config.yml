@@ -62,10 +62,8 @@ jobs:
                 /bids_dataset /outputs participant \
                 --participant_label 01 \
                 --afni_proc \
-                  '-subj_id {subj_id} \
-                  -script proc.bids -scr_overwrite -out_dir {out_dir} \
-                  -blocks tshift volreg blur scale \
-                  -copy_anat {anat_path} -tcat_remove_first_trs 0 -dsets {epi_paths} \
+                  '-subj_id {subj_id} -script proc.bids -scr_overwrite -out_dir {out_dir} \
+                  -blocks tshift volreg blur scale -copy_anat {anat_path} -tcat_remove_first_trs 0 -dsets {epi_paths} \
                   -volreg_align_to MIN_OUTLIER -blur_size 4.0 -bash'
         no_output_timeout: 6h
 
