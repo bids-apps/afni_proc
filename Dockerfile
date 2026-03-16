@@ -20,7 +20,7 @@ ENV LANG="en_US.UTF-8" \
     AFNI_NIFTI_VIEW="orig"
 
 RUN apt-get update -qq && apt-get install -yq --no-install-recommends  \
-    	apt-utils bzip2 ca-certificates curl locales unzip \
+        apt-utils bzip2 ca-certificates curl locales unzip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && localedef --force --inputfile=en_US --charmap=UTF-8 C.UTF-8 \
