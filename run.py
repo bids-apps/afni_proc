@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+ #!/usr/bin/env python3
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import argparse
@@ -381,6 +381,8 @@ for subject_label in subjects_to_analyze:
                     try:
 
                         anat_out_path = os.path.join(task_out_dir, 'anat_final.%s+tlrc.HEAD'%subject_label)
+                        if not os.path.exists(anat_out_path):
+                            anat_out_path = os.path.join(task_out_dir, 'anat_final.%s+orig.HEAD'%subject_label)
                         anat_exts = np.array([float(ss) for ss in subprocess.check_output(["3dinfo", "-extent", anat_out_path]).decode().split('\t')])
                         anat_lrext = np.abs(anat_exts[0]) + np.abs(anat_exts[1])
                         anat_mont_dim = np.floor(np.sqrt(anat_lrext))
